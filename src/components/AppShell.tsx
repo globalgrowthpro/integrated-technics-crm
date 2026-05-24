@@ -48,11 +48,13 @@ const employeeNav: NavItem[] = [
 const managerNav: NavItem[] = [
   { to: "/manager", icon: LayoutDashboard, key: "dashboard" },
   { to: "/manager/employees", icon: UserCircle2, key: "myTeam" },
+  { to: "/admin/pipeline", icon: Workflow, key: "pipeline" },
   { to: "/manager/activities", icon: CalendarCheck, key: "activities" },
   { to: "/manager/offers", icon: FileBadge, key: "offers" },
   { to: "/manager/attendance", icon: Clock4, key: "attendance" },
   { to: "/manager/reports", icon: History, key: "reports" },
 ];
+
 
 interface Props {
   panel: "admin" | "employee" | "manager";

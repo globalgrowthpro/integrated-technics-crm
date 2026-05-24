@@ -23,11 +23,9 @@ function fmtTime(iso: string) {
 export function LeadDetailsPage({ leadId }: { leadId: string }) {
   const { t } = useI18n();
   const router = useRouter();
-  const { isAdmin } = useRole();
-  const panel = isAdmin ? "admin" : "employee";
-  const user = isAdmin
-    ? { name: "hafez Rahim", role: t("admin"), initials: "HR" }
-    : { name: "hafez Rahim", role: t("employee"), initials: "HR" };
+  const { role } = useRole();
+  const panel = role;
+  const user = { name: "hafez Rahim", role: t(role as any), initials: "HR" };
   const { leads, notes, attachments, activities, history, settings, leadDistricts } = useStoreState();
   const lead = leads.find((l) => l.id === leadId);
   const [noteText, setNoteText] = useState("");

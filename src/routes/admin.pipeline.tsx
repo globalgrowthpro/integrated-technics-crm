@@ -16,9 +16,9 @@ function PipelinePage() {
   const { t } = useI18n();
   const { leads, settings } = useStoreState();
   const navigate = useNavigate();
-  const { isAdmin } = useRole();
-  const panel = isAdmin ? "admin" : "employee";
-  const user = { name: "hafez Rahim", role: isAdmin ? t("admin") : t("employee"), initials: "HR" };
+  const { role } = useRole();
+  const panel = role;
+  const user = { name: "hafez Rahim", role: t(role as any), initials: "HR" };
   const [dragId, setDragId] = useState<string | null>(null);
   const [overStage, setOverStage] = useState<LeadStatus | null>(null);
 
@@ -71,7 +71,10 @@ function PipelinePage() {
                       e.dataTransfer.setData("text/lead-id", l.id);
                     }}
                     onDragEnd={() => { setDragId(null); setOverStage(null); }}
-                    onClick={() => navigate({ to: "/admin/leads/$leadId", params: { leadId: l.id } })}
+                    onClick={() => {
+                      const targetRoute = role === "admin" ? "/admin/leads/$leadId" : "/employee/leads/$leadId";
+                      navigate({ to: targetRoute, params: { leadId: l.id } });
+                    }}
                     className={`group cursor-pointer rounded-lg border bg-card p-3 shadow-sm transition active:cursor-grabbing ${dragId === l.id ? "opacity-50 border-primary" : "border-border hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
                       }`}
                   >
@@ -81,7 +84,7 @@ function PipelinePage() {
                         <div className="truncate text-xs text-muted-foreground">{l.contact}</div>
                       </div>
                       <Link
-                        to="/admin/leads/$leadId"
+                        to={role === "admin" ? "/admin/leads/$leadId" : "/employee/leads/$leadId"}
                         params={{ leadId: l.id }}
                         onClick={(e) => e.stopPropagation()}
                         className="text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:text-primary"
