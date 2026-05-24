@@ -113,7 +113,12 @@ export interface Profile {
   phone: string;
   location: string;
   skills: string[];
+  manager?: string;
+  avatarUrl?: string;
+  targetValue?: number;
+  targetType?: "yearly" | "quarterly" | "monthly";
 }
+
 
 interface Settings {
   statuses: string[];
@@ -174,7 +179,12 @@ const seedProfile: Profile = {
   phone: "+20 100 123 4567",
   location: "Cairo HQ, Egypt",
   skills: ["Enterprise Sales", "CRM Strategy", "Odoo 19", "Negotiation", "Pipeline Management", "PMP Certified", "ITIL v4", "GDPR Compliance"],
+  manager: "Nour Khaled",
+  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+  targetValue: 1200000,
+  targetType: "yearly",
 };
+
 
 const seedSettings: Settings = {
   statuses: ["new", "contacted", "qualified", "proposal", "negotiation", "won", "lost"],
