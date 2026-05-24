@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { useI18n } from "@/lib/i18n";
 import { fmtMoney } from "@/lib/mock-data";
 import { actions, useStoreState, type LocationCity } from "@/lib/store";
+import { useRole } from "@/lib/role";
 import { Plus, Filter, Download, Search, List, Map as MapIcon, Pencil, Trash2, X } from "lucide-react";
 import { useState, useEffect, type ComponentType } from "react";
 import type { Lead, LeadStatus } from "@/lib/mock-data";
@@ -31,7 +32,8 @@ function LeadsPage() {
       import("@/components/LeadsMap").then((m) => setLeadsMap(() => m.LeadsMap));
     }
   }, [tab, LeadsMap]);
-  const user = { name: "hafez Rahim", role: t("admin"), initials: "HR" };
+  const { role, isAdmin } = useRole();
+  const user = { name: "hafez Rahim", role: t(role as any), initials: "HR" };
 
   if (isDetailRoute) {
     return <Outlet />;
@@ -47,7 +49,7 @@ function LeadsPage() {
   });
 
   return (
-    <AppShell panel="admin" user={user} pageTitle={t("leads")}>
+    <AppShell panel={role} user={user} pageTitle={t("leads")}>
       <div className="mb-4 inline-flex rounded-lg border border-border bg-card p-1 shadow-[var(--shadow-soft)]">
         <button
           onClick={() => setTab("list")}

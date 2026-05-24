@@ -16,14 +16,18 @@ const STATUS_META: Record<ActivityStatus, { icon: any; tone: string; label: stri
 
 const fmtH = (mins: number) => { const h = Math.floor(mins / 60); const m = mins % 60; return h ? `${h}h ${m ? `${m}m` : ""}`.trim() : `${m}m`; };
 
-export function ActivityDetailView({ activityId, panel }: { activityId: string; panel: "admin" | "employee" }) {
+export function ActivityDetailView({ activityId, panel }: { activityId: string; panel: "admin" | "employee" | "manager" }) {
   const { t } = useI18n();
   const { activities, leads, history } = useStoreState();
   const a = activities.find((x) => x.id === activityId);
-  const backTo = panel === "admin" ? "/admin/activities" : "/employee/activities";
-  const user = panel === "admin"
-    ? { name: "hafez Rahim", role: t("admin"), initials: "HR" }
-    : { name: "hafez Rahim", role: t("employee"), initials: "HR" };
+  const backTo =
+    panel === "admin"
+      ? "/admin/activities"
+      : panel === "manager"
+      ? "/manager/activities"
+      : "/employee/activities";
+  const user = { name: "hafez Rahim", role: t(panel as any), initials: "HR" };
+
 
   if (!a) {
     return (

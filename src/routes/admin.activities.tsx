@@ -25,7 +25,7 @@ const ACT_I18N: Record<string, any> = { Call: "actCall", Meeting: "actMeeting", 
 
 function ActivitiesPage() {
   const { t } = useI18n();
-  const { isAdmin } = useRole();
+  const { isAdmin, role } = useRole();
   const { activities, leads, settings } = useStoreState();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -70,7 +70,7 @@ function ActivitiesPage() {
   };
 
   return (
-    <AppShell panel="admin" user={{ name: "hafez Rahim", role: t("admin"), initials: "HR" }} pageTitle={t("activities")}>
+    <AppShell panel={role} user={{ name: "hafez Rahim", role: t(role as any), initials: "HR" }} pageTitle={t("activities")}>
       <div className="mb-6 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
         <div className="mb-4 flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Clock4 className="h-4 w-4" /></div>

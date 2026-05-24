@@ -30,9 +30,9 @@ function ProjectDetailsPage() {
   const { activities, history } = useStoreState();
   const { settings, projectLocations } = useStoreState();
   const project = projects.find((p) => p.id === projectId);
-  const { isAdmin } = useRole();
-  const panel = isAdmin ? "admin" : "employee";
-  const user = { name: "hafez Rahim", role: isAdmin ? t("admin") : t("employee"), initials: "HR" };
+  const { role } = useRole();
+  const panel = role;
+  const user = { name: "hafez Rahim", role: t(role as any), initials: "HR" };
 
   if (!project) {
     return (
