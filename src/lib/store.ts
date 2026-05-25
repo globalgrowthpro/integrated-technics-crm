@@ -76,6 +76,34 @@ export interface LocationCity {
   districts: string[];
 }
 
+export type UserRoleKey = "admin" | "manager" | "hr" | "finance" | "employee";
+export const USER_ROLES: UserRoleKey[] = ["admin", "manager", "hr", "finance", "employee"];
+export const APP_PAGES = [
+  "dashboard",
+  "leads",
+  "pipeline",
+  "activities",
+  "projects",
+  "employees",
+  "attendance",
+  "offers",
+  "history",
+  "settings",
+] as const;
+export type AppPage = (typeof APP_PAGES)[number];
+export type CrudOp = "create" | "read" | "update" | "delete";
+export interface RolePermission {
+  pages: AppPage[];
+  crud: Record<AppPage, CrudOp[]>;
+}
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRoleKey;
+  active: boolean;
+}
+
 export interface ProjectLocation {
   city: string;
   district: string;
@@ -127,6 +155,7 @@ interface Settings {
   automations: AutomationRule[];
   templates: NotificationTemplate[];
   locations: LocationCity[];
+  permissions: Record<UserRoleKey, RolePermission>;
 }
 
 interface State {
@@ -142,6 +171,7 @@ interface State {
   quotations: typeof quotations;
   attendance: AttendanceRecord[];
   profile: Profile;
+  users: AppUser[];
 }
 
 const now = () => new Date().toISOString();
@@ -159,6 +189,33 @@ const seedHistory: HistoryEntry[] = [
   { id: "H-005", ts: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), module: "employee", actor: "Yusuf Saleh", target: "Layla Hassan", action: "Updated role", details: "Field Operations → Senior Field Ops" },
   { id: "H-006", ts: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(), module: "settings", actor: "hafez Rahim", target: "Pipeline", action: "Renamed stage", details: "‘Won’ retained" },
   { id: "H-007", ts: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), module: "lead", actor: "Layla Hassan", target: "NEOM Logistics", action: "Lead created", details: "Source: Event" },
+];
+
+function allCrud(): CrudOp[] { return ["create", "read", "update", "delete"]; }
+function defaultPermissions(): Record<UserRoleKey, RolePermission> {
+  const allPages = [...APP_PAGES] as AppPage[];
+  const mk = (pages: AppPage[], crudByPage: Partial<Record<AppPage, CrudOp[]>>, defaultCrud: CrudOp[] = ["read"]): RolePermission => ({
+    pages,
+    crud: Object.fromEntries(allPages.map((p) => [p, pages.includes(p) ? (crudByPage[p] ?? defaultCrud) : []])) as Record<AppPage, CrudOp[]>,
+  });
+  return {
+    admin: mk(allPages, Object.fromEntries(allPages.map((p) => [p, allCrud()])), allCrud()),
+    manager: mk(
+      ["dashboard", "leads", "pipeline", "activities", "projects", "employees", "attendance", "offers", "history"],
+      { leads: allCrud(), pipeline: allCrud(), activities: allCrud(), projects: ["read", "update"], attendance: ["read", "update"], offers: ["read", "update"] },
+    ),
+    hr: mk(["dashboard", "employees", "attendance", "history"], { employees: allCrud(), attendance: allCrud() }),
+    finance: mk(["dashboard", "offers", "projects", "history"], { offers: allCrud(), projects: ["read", "update"] }),
+    employee: mk(["dashboard", "leads", "activities", "attendance"], { leads: ["create", "read", "update"], activities: ["create", "read", "update"], attendance: ["create", "read"] }),
+  };
+}
+
+const seedUsers: AppUser[] = [
+  { id: "U-1", name: "hafez Rahim", email: "hafez.rahim@integratedtechnics.com", role: "admin", active: true },
+  { id: "U-2", name: "Nour Khaled", email: "nour.khaled@integratedtechnics.com", role: "manager", active: true },
+  { id: "U-3", name: "Layla Hassan", email: "layla.hassan@integratedtechnics.com", role: "hr", active: true },
+  { id: "U-4", name: "Yusuf Saleh", email: "yusuf.saleh@integratedtechnics.com", role: "finance", active: true },
+  { id: "U-5", name: "Omar Tarek", email: "omar.tarek@integratedtechnics.com", role: "employee", active: true },
 ];
 
 const seedNotes: Note[] = [
@@ -218,6 +275,7 @@ const seedSettings: Settings = {
     { name: "Luxor", districts: ["East Bank", "West Bank", "Karnak"] },
     { name: "Port Said", districts: ["Al Arab", "Al Manakh", "Port Fouad"] },
   ],
+  permissions: defaultPermissions(),
 };
 
 const seedAttendance: AttendanceRecord[] = attendanceToday.records.map((r) => ({
@@ -248,6 +306,7 @@ let state: State = {
   settings: {
     ...seedSettings,
     locations: loadPersisted<LocationCity[]>("int-crm:locations", seedSettings.locations),
+    permissions: loadPersisted<Record<UserRoleKey, RolePermission>>("int-crm:permissions", seedSettings.permissions),
   },
   leadDistricts: loadPersisted<Record<string, string>>("int-crm:leadDistricts", {}),
   projectLocations: loadPersisted<Record<string, ProjectLocation>>("int-crm:projectLocations", {}),
@@ -255,6 +314,7 @@ let state: State = {
   quotations: loadPersisted<Quotation[]>("int-crm:quotations", quotations),
   attendance: loadPersisted<AttendanceRecord[]>("int-crm:attendance", seedAttendance),
   profile: loadPersisted<Profile>("int-crm:profile", seedProfile),
+  users: loadPersisted<AppUser[]>("int-crm:users", seedUsers),
 };
 
 const listeners = new Set<() => void>();
@@ -289,6 +349,8 @@ function persist() {
     localStorage.setItem("int-crm:quotations", JSON.stringify(state.quotations));
     localStorage.setItem("int-crm:attendance", JSON.stringify(state.attendance));
     localStorage.setItem("int-crm:profile", JSON.stringify(state.profile));
+    localStorage.setItem("int-crm:users", JSON.stringify(state.users));
+    localStorage.setItem("int-crm:permissions", JSON.stringify(state.settings.permissions));
   } catch { /* quota or serialization issue — ignore */ }
 }
 
@@ -535,6 +597,48 @@ export const actions = {
   updateProfile(patch: Partial<Profile>, actor = "hafez Rahim") {
     set((s) => ({ ...s, profile: { ...s.profile, ...patch } }));
     logHistory({ module: "employee", actor, target: state.profile.name, action: "Updated profile" });
+  },
+  // ---- Users CRUD ----
+  addUser(input: Omit<AppUser, "id">, actor = "hafez Rahim") {
+    const user: AppUser = { ...input, id: id("U") };
+    set((s) => ({ ...s, users: [user, ...s.users] }));
+    logHistory({ module: "settings", actor, target: user.name, action: "User created", details: user.role });
+  },
+  updateUser(userId: string, patch: Partial<AppUser>, actor = "hafez Rahim") {
+    let name = userId;
+    set((s) => ({
+      ...s,
+      users: s.users.map((u) => {
+        if (u.id === userId) { name = patch.name ?? u.name; return { ...u, ...patch }; }
+        return u;
+      }),
+    }));
+    logHistory({ module: "settings", actor, target: name, action: "User updated" });
+  },
+  removeUser(userId: string, actor = "hafez Rahim") {
+    const name = state.users.find((u) => u.id === userId)?.name ?? userId;
+    set((s) => ({ ...s, users: s.users.filter((u) => u.id !== userId) }));
+    logHistory({ module: "settings", actor, target: name, action: "User deleted" });
+  },
+  setRolePermission(role: UserRoleKey, page: AppPage, ops: CrudOp[]) {
+    set((s) => {
+      const perm = s.settings.permissions[role];
+      const hasPage = ops.length > 0;
+      const pages = hasPage
+        ? Array.from(new Set([...perm.pages, page]))
+        : perm.pages.filter((p) => p !== page);
+      return {
+        ...s,
+        settings: {
+          ...s.settings,
+          permissions: {
+            ...s.settings.permissions,
+            [role]: { pages, crud: { ...perm.crud, [page]: ops } },
+          },
+        },
+      };
+    });
+    logHistory({ module: "settings", actor: "hafez Rahim", target: role, action: "Updated permissions", details: `${page}: ${ops.join(",") || "none"}` });
   },
 };
 
