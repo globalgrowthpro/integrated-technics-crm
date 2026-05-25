@@ -349,6 +349,8 @@ function persist() {
     localStorage.setItem("int-crm:quotations", JSON.stringify(state.quotations));
     localStorage.setItem("int-crm:attendance", JSON.stringify(state.attendance));
     localStorage.setItem("int-crm:profile", JSON.stringify(state.profile));
+    localStorage.setItem("int-crm:users", JSON.stringify(state.users));
+    localStorage.setItem("int-crm:permissions", JSON.stringify(state.settings.permissions));
   } catch { /* quota or serialization issue — ignore */ }
 }
 
