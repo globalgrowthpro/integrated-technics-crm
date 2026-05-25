@@ -306,6 +306,7 @@ let state: State = {
   settings: {
     ...seedSettings,
     locations: loadPersisted<LocationCity[]>("int-crm:locations", seedSettings.locations),
+    permissions: loadPersisted<Record<UserRoleKey, RolePermission>>("int-crm:permissions", seedSettings.permissions),
   },
   leadDistricts: loadPersisted<Record<string, string>>("int-crm:leadDistricts", {}),
   projectLocations: loadPersisted<Record<string, ProjectLocation>>("int-crm:projectLocations", {}),
