@@ -8,34 +8,35 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { isAdmin } = useRole();
+  const { isAdmin, role } = useRole();
   const { t } = useI18n();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  // Route guard: employees should never see admin detail pages.
-  // Redirect /admin/leads/:id → /employee/leads/:id, and lock the rest of the
-  // admin-only detail surfaces (projects/employees) behind the admin gate.
+  // Redirect /admin/leads/:id to the correct panel based on active role
   if (!isAdmin) {
     const leadMatch = path.match(/^\/admin\/leads\/([^/]+)\/?$/);
     if (leadMatch) {
-      return <Navigate to="/employee/leads/$leadId" params={{ leadId: leadMatch[1] }} replace />;
+      const dest = role === "manager" ? "/employee/leads/$leadId" : "/employee/leads/$leadId";
+      return <Navigate to={dest} params={{ leadId: leadMatch[1] }} replace />;
     }
   }
 
-  // Employees can view shared modules (leads, pipeline, projects, activities)
-  const employeeAllowed = [
+  // Non-admin roles (manager & employee) can view shared modules
+  const sharedAllowed = [
     "/admin/leads",
     "/admin/pipeline",
     "/admin/projects",
     "/admin/activities",
   ];
-  // Allow list pages, but block admin-only detail pages for employees
-  // (project/employee detail surfaces stay admin-only).
+  // Block admin-only detail pages (project/employee detail surfaces stay admin-only)
   const adminOnlyDetail = /^\/admin\/(projects|employees)\/[^/]+\/?$/.test(path);
-  const allowedForEmployee =
+  const allowedForNonAdmin =
     !adminOnlyDetail &&
-    employeeAllowed.some((p) => path === p || path.startsWith(p + "/"));
-  if (!isAdmin && !allowedForEmployee) {
+    sharedAllowed.some((p) => path === p || path.startsWith(p + "/"));
+
+  if (!isAdmin && !allowedForNonAdmin) {
+    const homeLink = role === "manager" ? "/manager" : "/employee";
+    const homeLinkLabel = role === "manager" ? t("managerPanel") : t("goToEmployeePanel");
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-[var(--shadow-soft)]">
@@ -47,7 +48,7 @@ function AdminLayout() {
             {t("adminAccessMsg")}
           </p>
           <div className="mt-5 flex justify-center gap-2">
-            <Link to="/employee" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">{t("goToEmployeePanel")}</Link>
+            <Link to={homeLink} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">{homeLinkLabel}</Link>
             <Link to="/" className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-accent">{t("switchAccount")}</Link>
           </div>
         </div>

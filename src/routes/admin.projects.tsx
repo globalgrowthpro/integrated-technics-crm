@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { fmtMoney } from "@/lib/mock-data";
 import { actions, useStoreState } from "@/lib/store";
 import type { Project } from "@/lib/store";
+import { useRole } from "@/lib/role";
 import { Plus, Users2, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -16,7 +17,8 @@ export const Route = createFileRoute("/admin/projects")({
 function ProjectsPage() {
   const { t } = useI18n();
   const { projects } = useStoreState();
-  const user = { name: "hafez Rahim", role: t("admin"), initials: "HR" };
+  const { role, isAdmin } = useRole();
+  const user = { name: "hafez Rahim", role: t(role as any), initials: "HR" };
   const isDetailRoute = useRouterState({
     select: (state) => state.location.pathname.startsWith("/admin/projects/"),
   });
@@ -27,7 +29,7 @@ function ProjectsPage() {
   }
 
   return (
-    <AppShell panel="admin" user={user} pageTitle={t("projects")}>
+    <AppShell panel={role} user={user} pageTitle={t("projects")}>
       <div className="mb-5 flex justify-end">
         <button onClick={() => setEditing("new")} className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-brand)] hover:bg-primary/90">
           <Plus className="h-4 w-4" /> {t("addProject")}
