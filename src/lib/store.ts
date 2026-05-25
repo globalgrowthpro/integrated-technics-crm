@@ -313,6 +313,7 @@ let state: State = {
   quotations: loadPersisted<Quotation[]>("int-crm:quotations", quotations),
   attendance: loadPersisted<AttendanceRecord[]>("int-crm:attendance", seedAttendance),
   profile: loadPersisted<Profile>("int-crm:profile", seedProfile),
+  users: loadPersisted<AppUser[]>("int-crm:users", seedUsers),
 };
 
 const listeners = new Set<() => void>();
