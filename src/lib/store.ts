@@ -598,6 +598,48 @@ export const actions = {
     set((s) => ({ ...s, profile: { ...s.profile, ...patch } }));
     logHistory({ module: "employee", actor, target: state.profile.name, action: "Updated profile" });
   },
+  // ---- Users CRUD ----
+  addUser(input: Omit<AppUser, "id">, actor = "hafez Rahim") {
+    const user: AppUser = { ...input, id: id("U") };
+    set((s) => ({ ...s, users: [user, ...s.users] }));
+    logHistory({ module: "settings", actor, target: user.name, action: "User created", details: user.role });
+  },
+  updateUser(userId: string, patch: Partial<AppUser>, actor = "hafez Rahim") {
+    let name = userId;
+    set((s) => ({
+      ...s,
+      users: s.users.map((u) => {
+        if (u.id === userId) { name = patch.name ?? u.name; return { ...u, ...patch }; }
+        return u;
+      }),
+    }));
+    logHistory({ module: "settings", actor, target: name, action: "User updated" });
+  },
+  removeUser(userId: string, actor = "hafez Rahim") {
+    const name = state.users.find((u) => u.id === userId)?.name ?? userId;
+    set((s) => ({ ...s, users: s.users.filter((u) => u.id !== userId) }));
+    logHistory({ module: "settings", actor, target: name, action: "User deleted" });
+  },
+  setRolePermission(role: UserRoleKey, page: AppPage, ops: CrudOp[]) {
+    set((s) => {
+      const perm = s.settings.permissions[role];
+      const hasPage = ops.length > 0;
+      const pages = hasPage
+        ? Array.from(new Set([...perm.pages, page]))
+        : perm.pages.filter((p) => p !== page);
+      return {
+        ...s,
+        settings: {
+          ...s.settings,
+          permissions: {
+            ...s.settings.permissions,
+            [role]: { pages, crud: { ...perm.crud, [page]: ops } },
+          },
+        },
+      };
+    });
+    logHistory({ module: "settings", actor: "hafez Rahim", target: role, action: "Updated permissions", details: `${page}: ${ops.join(",") || "none"}` });
+  },
 };
 
 export type { Lead, LeadStatus };
