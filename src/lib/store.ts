@@ -76,6 +76,34 @@ export interface LocationCity {
   districts: string[];
 }
 
+export type UserRoleKey = "admin" | "manager" | "hr" | "finance" | "employee";
+export const USER_ROLES: UserRoleKey[] = ["admin", "manager", "hr", "finance", "employee"];
+export const APP_PAGES = [
+  "dashboard",
+  "leads",
+  "pipeline",
+  "activities",
+  "projects",
+  "employees",
+  "attendance",
+  "offers",
+  "history",
+  "settings",
+] as const;
+export type AppPage = (typeof APP_PAGES)[number];
+export type CrudOp = "create" | "read" | "update" | "delete";
+export interface RolePermission {
+  pages: AppPage[];
+  crud: Record<AppPage, CrudOp[]>;
+}
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRoleKey;
+  active: boolean;
+}
+
 export interface ProjectLocation {
   city: string;
   district: string;
@@ -127,6 +155,7 @@ interface Settings {
   automations: AutomationRule[];
   templates: NotificationTemplate[];
   locations: LocationCity[];
+  permissions: Record<UserRoleKey, RolePermission>;
 }
 
 interface State {
@@ -142,6 +171,7 @@ interface State {
   quotations: typeof quotations;
   attendance: AttendanceRecord[];
   profile: Profile;
+  users: AppUser[];
 }
 
 const now = () => new Date().toISOString();
