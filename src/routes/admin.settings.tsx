@@ -4,8 +4,9 @@ import { useI18n } from "@/lib/i18n";
 import { actions, useStoreState } from "@/lib/store";
 import { useRole } from "@/lib/role";
 import { useState } from "react";
-import { Workflow, Tag, CalendarCheck, Zap, MessageSquare, Plus, Check, ShieldAlert, MapPin, X } from "lucide-react";
+import { Workflow, Tag, CalendarCheck, Zap, MessageSquare, Plus, Check, ShieldAlert, MapPin, X, Users as UsersIcon, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { APP_PAGES, USER_ROLES, type AppPage, type CrudOp, type UserRoleKey, type AppUser } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/settings")({
   component: SettingsPage,
@@ -17,6 +18,7 @@ const TABS = [
   { key: "stages", label: "Pipeline Stages", icon: Workflow },
   { key: "activities", label: "Activity Types", icon: CalendarCheck },
   { key: "locations", label: "Locations", icon: MapPin },
+  { key: "users", label: "Users & Permissions", icon: UsersIcon },
   { key: "automations", label: "Automations", icon: Zap },
   { key: "templates", label: "Templates", icon: MessageSquare },
 ] as const;
@@ -111,6 +113,17 @@ function SettingsPage() {
             <section>
               <Header title={t("locations")} hint={t("locationsDesc")} />
               <LocationsEditor cities={settings.locations} />
+            </section>
+          )}
+
+          {tab === "users" && (
+            <section>
+              <Header title="Users & Permissions" hint="Manage users and configure allowed pages and CRUD operations per role." />
+              <UsersEditor />
+              <div className="mt-8">
+                <h3 className="mb-3 font-display text-base font-bold text-foreground">Role permissions</h3>
+                <PermissionsMatrix />
+              </div>
             </section>
           )}
 
