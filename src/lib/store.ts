@@ -191,6 +191,33 @@ const seedHistory: HistoryEntry[] = [
   { id: "H-007", ts: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), module: "lead", actor: "Layla Hassan", target: "NEOM Logistics", action: "Lead created", details: "Source: Event" },
 ];
 
+function allCrud(): CrudOp[] { return ["create", "read", "update", "delete"]; }
+function defaultPermissions(): Record<UserRoleKey, RolePermission> {
+  const allPages = [...APP_PAGES] as AppPage[];
+  const mk = (pages: AppPage[], crudByPage: Partial<Record<AppPage, CrudOp[]>>, defaultCrud: CrudOp[] = ["read"]): RolePermission => ({
+    pages,
+    crud: Object.fromEntries(allPages.map((p) => [p, pages.includes(p) ? (crudByPage[p] ?? defaultCrud) : []])) as Record<AppPage, CrudOp[]>,
+  });
+  return {
+    admin: mk(allPages, Object.fromEntries(allPages.map((p) => [p, allCrud()])), allCrud()),
+    manager: mk(
+      ["dashboard", "leads", "pipeline", "activities", "projects", "employees", "attendance", "offers", "history"],
+      { leads: allCrud(), pipeline: allCrud(), activities: allCrud(), projects: ["read", "update"], attendance: ["read", "update"], offers: ["read", "update"] },
+    ),
+    hr: mk(["dashboard", "employees", "attendance", "history"], { employees: allCrud(), attendance: allCrud() }),
+    finance: mk(["dashboard", "offers", "projects", "history"], { offers: allCrud(), projects: ["read", "update"] }),
+    employee: mk(["dashboard", "leads", "activities", "attendance"], { leads: ["create", "read", "update"], activities: ["create", "read", "update"], attendance: ["create", "read"] }),
+  };
+}
+
+const seedUsers: AppUser[] = [
+  { id: "U-1", name: "hafez Rahim", email: "hafez.rahim@integratedtechnics.com", role: "admin", active: true },
+  { id: "U-2", name: "Nour Khaled", email: "nour.khaled@integratedtechnics.com", role: "manager", active: true },
+  { id: "U-3", name: "Layla Hassan", email: "layla.hassan@integratedtechnics.com", role: "hr", active: true },
+  { id: "U-4", name: "Yusuf Saleh", email: "yusuf.saleh@integratedtechnics.com", role: "finance", active: true },
+  { id: "U-5", name: "Omar Tarek", email: "omar.tarek@integratedtechnics.com", role: "employee", active: true },
+];
+
 const seedNotes: Note[] = [
   { id: "N-1", leadId: "L-1042", ts: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), author: "hafez Rahim", text: "Client requested a revised SLA with 4-hour response window." },
   { id: "N-2", leadId: "L-1042", ts: new Date(Date.now() - 1000 * 60 * 60 * 28).toISOString(), author: "Nour Khaled", text: "Site survey scheduled for next Tuesday with their facilities team." },
