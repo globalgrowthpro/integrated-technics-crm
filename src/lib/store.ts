@@ -248,6 +248,7 @@ const seedSettings: Settings = {
     { name: "Luxor", districts: ["East Bank", "West Bank", "Karnak"] },
     { name: "Port Said", districts: ["Al Arab", "Al Manakh", "Port Fouad"] },
   ],
+  permissions: defaultPermissions(),
 };
 
 const seedAttendance: AttendanceRecord[] = attendanceToday.records.map((r) => ({
