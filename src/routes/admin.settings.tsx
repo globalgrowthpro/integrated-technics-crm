@@ -185,6 +185,151 @@ function Header({ title, hint }: { title: string; hint: string }) {
   );
 }
 
+function UsersEditor() {
+  const { users, settings } = useStoreState();
+  const [draft, setDraft] = useState<{ name: string; email: string; role: UserRoleKey }>({ name: "", email: "", role: "employee" });
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_160px_auto]">
+        <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Full name" className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        <input value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} placeholder="Email" className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        <select value={draft.role} onChange={(e) => setDraft({ ...draft, role: e.target.value as UserRoleKey })} className="h-10 rounded-lg border border-border bg-background px-3 text-sm capitalize focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20">
+          {USER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <button
+          onClick={() => {
+            if (!draft.name.trim() || !draft.email.trim()) return;
+            actions.addUser({ name: draft.name.trim(), email: draft.email.trim(), role: draft.role, active: true });
+            setDraft({ name: "", email: "", role: "employee" });
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" /> Add user
+        </button>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-start">Name</th>
+              <th className="px-3 py-2 text-start">Email</th>
+              <th className="px-3 py-2 text-start">Role</th>
+              <th className="px-3 py-2 text-start">Active</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {users.map((u) => <UserRow key={u.id} user={u} />)}
+            {users.length === 0 && (
+              <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No users yet</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">{Object.keys(settings.permissions).length} role profiles configured.</p>
+    </div>
+  );
+}
+
+function UserRow({ user }: { user: AppUser }) {
+  const [edit, setEdit] = useState(false);
+  const [draft, setDraft] = useState(user);
+  return (
+    <tr className="bg-background">
+      <td className="px-3 py-2">
+        {edit ? <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className="h-8 w-full rounded border border-border bg-card px-2 text-sm" /> : <span className="font-semibold text-foreground">{user.name}</span>}
+      </td>
+      <td className="px-3 py-2">
+        {edit ? <input value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} className="h-8 w-full rounded border border-border bg-card px-2 text-sm" /> : <span className="text-muted-foreground">{user.email}</span>}
+      </td>
+      <td className="px-3 py-2">
+        {edit ? (
+          <select value={draft.role} onChange={(e) => setDraft({ ...draft, role: e.target.value as UserRoleKey })} className="h-8 rounded border border-border bg-card px-2 text-sm capitalize">
+            {USER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        ) : (
+          <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold capitalize text-primary">{user.role}</span>
+        )}
+      </td>
+      <td className="px-3 py-2">
+        <button
+          onClick={() => actions.updateUser(user.id, { active: !user.active })}
+          className={`relative h-5 w-9 rounded-full transition ${user.active ? "bg-primary" : "bg-muted"}`}
+          aria-label="Toggle active"
+        >
+          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${user.active ? "left-[18px]" : "left-0.5"}`} />
+        </button>
+      </td>
+      <td className="px-3 py-2 text-end">
+        <div className="inline-flex items-center gap-2">
+          {edit ? (
+            <>
+              <button onClick={() => { actions.updateUser(user.id, draft); setEdit(false); }} className="inline-flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground"><Check className="h-3 w-3" /> Save</button>
+              <button onClick={() => { setDraft(user); setEdit(false); }} className="rounded border border-border px-2 py-1 text-xs">Cancel</button>
+            </>
+          ) : (
+            <button onClick={() => setEdit(true)} className="rounded border border-border px-2 py-1 text-xs font-semibold">Edit</button>
+          )}
+          <button onClick={() => { if (confirm(`Delete ${user.name}?`)) actions.removeUser(user.id); }} className="inline-flex items-center gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600"><Trash2 className="h-3 w-3" /></button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function PermissionsMatrix() {
+  const { settings } = useStoreState();
+  const CRUD: CrudOp[] = ["create", "read", "update", "delete"];
+  return (
+    <div className="space-y-4">
+      {USER_ROLES.map((role) => (
+        <div key={role} className="rounded-xl border border-border bg-background p-4">
+          <div className="mb-3 font-display text-sm font-bold capitalize text-foreground">{role}</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-muted-foreground">
+                <tr>
+                  <th className="px-2 py-1 text-start font-semibold">Page</th>
+                  {CRUD.map((op) => <th key={op} className="px-2 py-1 text-center font-semibold capitalize">{op}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {APP_PAGES.map((page) => {
+                  const ops = settings.permissions[role]?.crud[page] ?? [];
+                  return (
+                    <tr key={page} className="border-t border-border">
+                      <td className="px-2 py-1.5 font-semibold capitalize text-foreground">{page}</td>
+                      {CRUD.map((op) => {
+                        const checked = ops.includes(op);
+                        return (
+                          <td key={op} className="px-2 py-1.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={role === "admin"}
+                              onChange={(e) => {
+                                const next = e.target.checked ? Array.from(new Set([...ops, op])) : ops.filter((x) => x !== op);
+                                actions.setRolePermission(role as UserRoleKey, page as AppPage, next);
+                              }}
+                              className="h-4 w-4 cursor-pointer accent-primary"
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">Admin role always has full access.</p>
+    </div>
+  );
+}
+
+
 function LocationsEditor({ cities }: { cities: { name: string; districts: string[] }[] }) {
   const { t } = useI18n();
   const [newCity, setNewCity] = useState("");
