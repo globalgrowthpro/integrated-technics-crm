@@ -188,7 +188,15 @@ const seedProfile: Profile = {
 
 const seedSettings: Settings = {
   statuses: ["new", "contacted", "qualified", "proposal", "negotiation", "won", "lost"],
-  stages: [],
+  stages: [
+    { key: "new", label: "New", color: "#64748b" },
+    { key: "contacted", label: "Contacted", color: "#3b82f6" },
+    { key: "qualified", label: "Qualified", color: "#8b5cf6" },
+    { key: "proposal", label: "Proposal", color: "#f59e0b" },
+    { key: "negotiation", label: "Negotiation", color: "#ec4899" },
+    { key: "won", label: "Won", color: "#10b981" },
+    { key: "lost", label: "Lost", color: "#ef4444" },
+  ],
   activityTypes: ["Call", "Meeting", "Site Visit", "Follow-up", "Inspection", "Email"],
   automations: [
     { id: "AU-1", name: "Auto-assign new web leads", trigger: "Lead created from Website", action: "Assign to Nour Khaled", enabled: true },
